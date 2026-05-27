@@ -110,6 +110,11 @@ void J9::ARM64::CodeGenerator::initialize()
     if (!TR::Compiler->om.canGenerateArraylets() && !disableInlineStringCodingHasNegatives) {
         cg->setSupportsInlineStringCodingHasNegatives();
     }
+
+    static bool disableCompareUnsignedInlining = feGetEnv("TR_DisableCompareUnsignedInlining") != NULL;
+    if (!disableCompareUnsignedInlining) {
+        cg->setSupportsInlineIntegerLongCompareUnsigned();
+    }
 #if JAVA_SPEC_VERSION >= 19
     static bool disableInlineStringCodingCountPositives
         = feGetEnv("TR_DisableInlineStringCodingCountPositives") != NULL;
