@@ -11459,6 +11459,29 @@ static TR::Register *inlineHasNegativesOrCountPositives(TR::Node *node, TR::Reco
     return indexReg;
 }
 
+static TR::Register *inlineIntegerLongCompareUnsigned(TR::Node *node, bool isInt, TR::CodeGenerator *cg)
+{
+    TR::Register *aReg = cg->evaluate(node->getChild(0));
+    TR::Register *bReg = cg->evaluate(node->getChild(1));
+    TR::Register *resultReg = cg->allocateRegister();
+
+    generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, resultReg, resultReg, cg);
+
+    isInt ? generateRegRegInstruction(TR::InstOpCode::CMP4RegReg, node, aReg, bReg, cg)
+          : generateRegRegInstruction(TR::InstOpCode::CMP8RegReg, node, aReg, bReg, cg);
+
+    // Set return register to 1 if x > y unsigned, otherwise remain 0
+    generateRegInstruction(TR::InstOpCode::SETA1Reg, node, resultReg, cg);
+    // Subtract CF from return register if x < y, otherwise remain 0
+    generateRegImmInstruction(TR::InstOpCode::SBB4RegImm4, node, resultReg, 0, cg);
+
+    node->setRegister(resultReg);
+    cg->decReferenceCount(node->getChild(0));
+    cg->decReferenceCount(node->getChild(1));
+
+    return resultReg;
+}
+
 // Generate inline code if possible for a call to an inline method. The call
 // may be direct or indirect; if it is indirect a guard will be generated around
 // the inline code and a fall-back to the indirect call.
@@ -13077,7 +13100,16 @@ TR::Register *J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::Co
 
             callInlined = true;
             break;
-
+        case TR::java_lang_Integer_compareUnsigned:
+            if (cg->getSupportsInlineIntegerCompareUnsigned()) {
+                return inlineIntegerLongCompareUnsigned(node, true, cg);
+            }
+            break;
+        case TR::java_lang_Long_compareUnsigned:
+            if (cg->getSupportsInlineLongCompareUnsigned()) {
+                return inlineIntegerLongCompareUnsigned(node, false, cg);
+            }
+            break;
         default:
             break;
     }
