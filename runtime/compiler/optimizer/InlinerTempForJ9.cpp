@@ -5500,6 +5500,11 @@ bool TR_J9InlinerPolicy::suppressInliningRecognizedInitialCallee(TR_CallSite *ca
                 return true;
             }
             break;
+        case TR::java_lang_Integer_compareUnsigned:
+        case TR::java_lang_Long_compareUnsigned:
+            if (cg->getSupportsInlineIntegerLongCompareUnsigned()) {
+                return true;
+            }
         default:
             break;
     }
