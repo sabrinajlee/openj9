@@ -11756,12 +11756,16 @@ static TR::Register *inlineIntegerLongCompareUnsigned(TR::Node *node, bool isInt
     TR::Register *bReg = cg->evaluate(node->getChild(1));
     TR::Register *resultReg = cg->allocateRegister();
 
-    generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, resultReg, resultReg, cg);
+    //generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, resultReg, resultReg, cg);
+
+    // MOVZXReg4Reg1
 
     if (isInt) {
         generateRegRegInstruction(TR::InstOpCode::CMP4RegReg, node, aReg, bReg, cg);
         // Set return register to 1 if x > y unsigned, otherwise remain 0
         generateRegInstruction(TR::InstOpCode::SETA1Reg, node, resultReg, cg);
+        // zero extend the register
+        generateRegRegInstruction(TR::InstOpCode::MOVZXReg4Reg1, node, resultReg, resultReg, cg);
         // Subtract CF from return register if x < y, otherwise remain 0
         generateRegImmInstruction(TR::InstOpCode::SBB4RegImm4, node, resultReg, 0, cg);
 
@@ -11769,6 +11773,7 @@ static TR::Register *inlineIntegerLongCompareUnsigned(TR::Node *node, bool isInt
     } else {
         generateRegRegInstruction(TR::InstOpCode::CMP8RegReg, node, aReg, bReg, cg);
         generateRegInstruction(TR::InstOpCode::SETA1Reg, node, resultReg, cg);
+        generateRegRegInstruction(TR::InstOpCode::MOVZXReg4Reg1, node, resultReg, resultReg, cg);
         generateRegImmInstruction(TR::InstOpCode::SBB4RegImm4, node, resultReg, 0, cg);
     }
 
