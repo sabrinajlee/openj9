@@ -149,7 +149,9 @@ void J9::X86::CodeGenerator::initialize()
 
     static bool disableCompareUnsignedInlining = feGetEnv("TR_DisableCompareUnsignedInlining") != NULL;
     if (!disableCompareUnsignedInlining) {
-        cg->setSupportsInlineIntegerLongCompareUnsigned();
+        cg->setSupportsInlineIntegerCompareUnsigned();
+        if (comp->target().is64Bit()) {
+            cg->setSupportsInlineLongCompareUnsigned();
     }
 
     // Disable fast gencon barriers for AOT compiles because relocations on

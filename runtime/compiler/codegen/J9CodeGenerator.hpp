@@ -633,19 +633,30 @@ public:
     void setSupportsInlineUnsafeCompareAndExchange() { _j9Flags.set(SupportsInlineUnsafeCompareAndExchange); }
 
     /** \brief
-     *    Determines whether the code generator supports inlining of java/lang/Integer.compareUnsigned() or
-     * java/lang/Long.compareUnsigned()
+     *    Determines whether the code generator supports inlining of java/lang/Integer.compareUnsigned()
      */
-    bool getSupportsInlineIntegerLongCompareUnsigned()
+    bool getSupportsInlineIntegerCompareUnsigned()
     {
-        return _j9Flags.testAny(SupportsInlineIntegerLongCompareUnsigned);
+        return _j9Flags.testAny(SupportsInlineIntegerCompareUnsigned);
     }
 
     /** \brief
-     *    The code generator supports inlining of java/lang/Integer.compareUnsigned() or
-     * java/lang/Long.compareUnsigned()
+     *    Determines whether the code generator supports inlining of java/lang/Long.compareUnsigned()
      */
-    void setSupportsInlineIntegerLongCompareUnsigned() { _j9Flags.set(SupportsInlineIntegerLongCompareUnsigned); }
+    bool getSupportsInlineLongCompareUnsigned()
+    {
+        return _j9Flags.testAny(SupportsInlineLongCompareUnsigned);
+    }
+
+    /** \brief
+     *    The code generator supports inlining of java/lang/Integer.compareUnsigned()
+     */
+    void setSupportsInlineIntegerCompareUnsigned() { _j9Flags.set(SupportsInlineIntegerCompareUnsigned); }
+
+    /** \brief
+     *    The code generator supports inlining of java/lang/Long.compareUnsigned()
+     */
+    void setSupportsInlineLongCompareUnsigned() { _j9Flags.set(SupportsInlineLongCompareUnsigned); }
 
     /**
      * \brief
@@ -863,7 +874,8 @@ private:
         SupportsInlineUnsafeCompareAndExchange = 0x00040000,
         SupportsInlineStringIndexOfString = 0x00080000, /*! codegen inlining of Java string index of string */
         SupportsInlineDecodeToLatin1Impl = 0x00100000,
-        SupportsInlineIntegerLongCompareUnsigned = 0x00200000,
+        SupportsInlineIntegerCompareUnsigned = 0x00200000,
+        SupportsInlineLongCompareUnsigned = 0x00400000,
     };
 
     flags32_t _j9Flags;
