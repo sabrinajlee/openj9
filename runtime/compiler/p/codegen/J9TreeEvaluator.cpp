@@ -14285,6 +14285,24 @@ static void inlineArrayCopy_ICF(TR::Node *node, int64_t byteLen, TR::Register *s
     return;
 }
 
+static TR::Register *inlineIntegerLongCompareUnsigned(TR::Node *node, bool isInt, TR::CodeGenerator *cg)
+{
+    TR::Register *condReg = cg->allocateRegister(TR_CCR);
+    TR::Register *aReg = cg->evaluate(node->getChild(0));
+    TR::Register *bReg = cg->evaluate(node->getChild(1));
+    TR::Register *resultReg = cg->allocateRegister();
+
+    generateTrg1Src2Instruction(cg, (isInt ? TR::InstOpCode::cmpl4 : TR::InstOpCode::cmpl8), node, condReg, aReg, bReg);
+    generateTrg1Src1Instruction(cg, TR::InstOpCode::setb, node, resultReg, condReg);
+
+    cg->stopUsingRegister(condReg);
+    cg->decReferenceCount(node->getChild(0));
+    cg->decReferenceCount(node->getChild(1));
+    node->setRegister(resultReg);
+
+    return resultReg;
+}
+
 bool J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&resultReg)
 {
     TR::CodeGenerator *cg = self();
@@ -14748,6 +14766,17 @@ bool J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&r
 
                 break;
             }
+
+            case TR::java_lang_Integer_compareUnsigned:
+                if (cg->getSupportsInlineIntegerCompareUnsigned()) {
+                    return inlineIntegerLongCompareUnsigned(node, true, cg);
+                }
+                break;
+            case TR::java_lang_Long_compareUnsigned:
+                if (cg->getSupportsInlineLongCompareUnsigned()) {
+                    return inlineIntegerLongCompareUnsigned(node, false, cg);
+                }
+                break;
 
             default:
                 break;
