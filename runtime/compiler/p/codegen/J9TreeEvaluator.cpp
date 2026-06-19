@@ -1961,7 +1961,7 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node, 
     TR::Register *subArraySizeReg = cg->allocateRegister();
 
     TR::Register *vmThreadReg = cg->getMethodMetaDataRegister();
-    TR::Register *condReg = cg->allocateRegister(TR_CCR);
+    TR::Register *c  = cg->allocateRegister(TR_CCR);
 
     TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
     TR::LabelSymbol *nonZeroFirstDimLabel = generateLabelSymbol(cg);
@@ -14287,17 +14287,39 @@ static void inlineArrayCopy_ICF(TR::Node *node, int64_t byteLen, TR::Register *s
 
 static TR::Register *inlineIntegerLongCompareUnsigned(TR::Node *node, bool isInt, TR::CodeGenerator *cg)
 {
+    TR::Compilation *comp = cg->comp();
+    bool isAtLeastP9 = comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P9);
+
     TR::Register *condReg = cg->allocateRegister(TR_CCR);
     TR::Register *aReg = cg->evaluate(node->getChild(0));
     TR::Register *bReg = cg->evaluate(node->getChild(1));
     TR::Register *resultReg = cg->allocateRegister();
 
+    TR::Register *const1Reg = !isAtLeastP9 ? cg->allocateRegister() : nullptr;
+    TR::Register *constNeg1Reg = !isAtLeastP9 ? cg->allocateRegister() : nullptr;
+
     generateTrg1Src2Instruction(cg, (isInt ? TR::InstOpCode::cmpl4 : TR::InstOpCode::cmpl8), node, condReg, aReg, bReg);
-    generateTrg1Src1Instruction(cg, TR::InstOpCode::setb, node, resultReg, condReg);
+
+    if (isAtLeastP9) {
+        generateTrg1Src1Instruction(cg, TR::InstOpCode::setb, node, resultReg, condReg);
+    }
+    else {
+        TR::Machine *machine = cg->machine();
+        TR::RealRegister *gr0 = machine->getRealRegister(TR::RealRegister::gr0);  
+
+        generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, const1Reg, 1);
+        generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, constNeg1Reg, -1);
+        generateTrg1Src3Instruction(cg, TR::InstOpCode::isellt, node, resultReg, constNeg1Reg, const1Reg, condReg);
+        generateTrg1Src3Instruction(cg, TR::InstOpCode::iseleq, node, resultReg, gr0, resultReg, condReg);
+    }
+
+    if (const1Reg) cg->stopUsingRegister(const1Reg);
+    if (constNeg1Reg) cg->stopUsingRegister(constNeg1Reg);
 
     cg->stopUsingRegister(condReg);
     cg->decReferenceCount(node->getChild(0));
     cg->decReferenceCount(node->getChild(1));
+
     node->setRegister(resultReg);
 
     return resultReg;
