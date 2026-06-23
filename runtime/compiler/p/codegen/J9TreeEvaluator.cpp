@@ -1961,7 +1961,7 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node, 
     TR::Register *subArraySizeReg = cg->allocateRegister();
 
     TR::Register *vmThreadReg = cg->getMethodMetaDataRegister();
-    TR::Register *c  = cg->allocateRegister(TR_CCR);
+    TR::Register *condReg  = cg->allocateRegister(TR_CCR);
 
     TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
     TR::LabelSymbol *nonZeroFirstDimLabel = generateLabelSymbol(cg);
