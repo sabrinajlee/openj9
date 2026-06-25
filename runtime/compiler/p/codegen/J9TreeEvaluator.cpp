@@ -14304,13 +14304,13 @@ static TR::Register *inlineIntegerLongCompareUnsigned(TR::Node *node, bool isInt
         generateTrg1Src1Instruction(cg, TR::InstOpCode::setb, node, resultReg, condReg);
     }
     else {
-        TR::Machine *machine = cg->machine();
-        TR::RealRegister *gr0 = machine->getRealRegister(TR::RealRegister::gr0);  
+        //TR::Machine *machine = cg->machine();
+        //TR::RealRegister *gr0 = machine->getRealRegister(TR::RealRegister::gr0);  
 
         generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, const1Reg, 1);
         generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, constNeg1Reg, -1);
         generateTrg1Src3Instruction(cg, TR::InstOpCode::isellt, node, resultReg, constNeg1Reg, const1Reg, condReg);
-        generateTrg1Src3Instruction(cg, TR::InstOpCode::iseleq, node, resultReg, gr0, resultReg, condReg);
+        generateTrg1Src3Instruction(cg, TR::InstOpCode::iseleq, node, resultReg, NULL, resultReg, condReg);
     }
 
     if (const1Reg) cg->stopUsingRegister(const1Reg);
