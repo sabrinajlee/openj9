@@ -14297,6 +14297,7 @@ static TR::Register *inlineIntegerLongCompareUnsigned(TR::Node *node, bool isInt
 
     TR::Register *const1Reg = !isAtLeastP9 ? cg->allocateRegister() : nullptr;
     TR::Register *constNeg1Reg = !isAtLeastP9 ? cg->allocateRegister() : nullptr;
+    TR::Register *const0Reg = !isAtLeastP9 ? cg->allocateRegister() : nullptr;
 
     generateTrg1Src2Instruction(cg, (isInt ? TR::InstOpCode::cmpl4 : TR::InstOpCode::cmpl8), node, condReg, aReg, bReg);
 
@@ -14309,8 +14310,9 @@ static TR::Register *inlineIntegerLongCompareUnsigned(TR::Node *node, bool isInt
 
         generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, const1Reg, 1);
         generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, constNeg1Reg, -1);
+        generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, const0Reg, 0);
         generateTrg1Src3Instruction(cg, TR::InstOpCode::isellt, node, resultReg, constNeg1Reg, const1Reg, condReg);
-        generateTrg1Src3Instruction(cg, TR::InstOpCode::iseleq, node, resultReg, NULL, resultReg, condReg);
+        generateTrg1Src3Instruction(cg, TR::InstOpCode::iseleq, node, resultReg, const0Reg, resultReg, condReg);
     }
 
     if (const1Reg) cg->stopUsingRegister(const1Reg);
