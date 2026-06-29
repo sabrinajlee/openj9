@@ -14288,26 +14288,39 @@ static void inlineArrayCopy_ICF(TR::Node *node, int64_t byteLen, TR::Register *s
 static TR::Register *inlineIntegerLongCompareUnsigned(TR::Node *node, bool isInt, TR::CodeGenerator *cg)
 {
     TR::Compilation *comp = cg->comp();
+    TR::Node *secondChild = node->getChild(1);
     bool isAtLeastP9 = comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P9);
+    bool secondChildConstant = (secondChild->getOpCode().isLoadConst() && secondChild->getRegister() == NULL);
 
     TR::Register *condReg = cg->allocateRegister(TR_CCR);
-    TR::Register *aReg = cg->evaluate(node->getChild(0));
-    TR::Register *bReg = cg->evaluate(node->getChild(1));
     TR::Register *resultReg = cg->allocateRegister();
+    TR::Register *aReg = cg->evaluate(node->getChild(0));
+    TR::Register *bReg = isAtLeastP9 ? cg->evaluate(node->getChild(1)) : nullptr;
 
     TR::Register *const1Reg = !isAtLeastP9 ? cg->allocateRegister() : nullptr;
     TR::Register *constNeg1Reg = !isAtLeastP9 ? cg->allocateRegister() : nullptr;
     TR::Register *const0Reg = !isAtLeastP9 ? cg->allocateRegister() : nullptr;
 
-    generateTrg1Src2Instruction(cg, (isInt ? TR::InstOpCode::cmpl4 : TR::InstOpCode::cmpl8), node, condReg, aReg, bReg);
+    //generateTrg1Src2Instruction(cg, (isInt ? TR::InstOpCode::cmpl4 : TR::InstOpCode::cmpl8), node, condReg, aReg, bReg);
 
     if (isAtLeastP9) {
+        generateTrg1Src2Instruction(cg, (isInt ? TR::InstOpCode::cmpl4 : TR::InstOpCode::cmpl8), node, condReg, aReg, bReg);
         generateTrg1Src1Instruction(cg, TR::InstOpCode::setb, node, resultReg, condReg);
     }
     else {
-        //TR::Machine *machine = cg->machine();
-        //TR::RealRegister *gr0 = machine->getRealRegister(TR::RealRegister::gr0);  
-
+        if (secondChildConstant) {
+            int64_t value = isInt ? secondChild->getInt() : secondChild->getLongInt(); //check this
+            if (value >= 0 && value <= 0xFFFF) {
+                generateTrg1Src1ImmInstruction(cg, (isInt ? TR::InstOpCode::cmpli4 : TR::InstOpCode::cmpli8), node, condReg, aReg, value);
+            } else {
+                bReg = cg->evaluate(secondChild);
+                generateTrg1Src2Instruction(cg, (isInt ? TR::InstOpCode::cmpl4 : TR::InstOpCode::cmpl8), node, condReg, aReg, bReg);
+            }
+        }
+        else {
+            bReg = cg->evaluate(secondChild);
+            generateTrg1Src2Instruction(cg, (isInt ? TR::InstOpCode::cmpl4 : TR::InstOpCode::cmpl8), node, condReg, aReg, bReg);
+        }
         generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, const1Reg, 1);
         generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, constNeg1Reg, -1);
         generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, const0Reg, 0);
@@ -14317,10 +14330,11 @@ static TR::Register *inlineIntegerLongCompareUnsigned(TR::Node *node, bool isInt
 
     if (const1Reg) cg->stopUsingRegister(const1Reg);
     if (constNeg1Reg) cg->stopUsingRegister(constNeg1Reg);
+    if (const0Reg) cg->stopUsingRegister(const0Reg);
 
     cg->stopUsingRegister(condReg);
     cg->decReferenceCount(node->getChild(0));
-    cg->decReferenceCount(node->getChild(1));
+    cg->decReferenceCount(secondChild);
 
     node->setRegister(resultReg);
 
