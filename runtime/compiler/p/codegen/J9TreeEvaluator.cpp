@@ -14295,32 +14295,27 @@ static TR::Register *inlineIntegerLongCompareUnsigned(TR::Node *node, bool isInt
     TR::Register *condReg = cg->allocateRegister(TR_CCR);
     TR::Register *resultReg = cg->allocateRegister();
     TR::Register *aReg = cg->evaluate(node->getChild(0));
-    TR::Register *bReg = isAtLeastP9 ? cg->evaluate(node->getChild(1)) : nullptr;
 
     TR::Register *const1Reg = !isAtLeastP9 ? cg->allocateRegister() : nullptr;
     TR::Register *constNeg1Reg = !isAtLeastP9 ? cg->allocateRegister() : nullptr;
     TR::Register *const0Reg = !isAtLeastP9 ? cg->allocateRegister() : nullptr;
 
-    //generateTrg1Src2Instruction(cg, (isInt ? TR::InstOpCode::cmpl4 : TR::InstOpCode::cmpl8), node, condReg, aReg, bReg);
-
-    if (isAtLeastP9) {
+    bool useImmediate = false;
+    if (secondChildConstant) {
+        int64_t value = isInt ? secondChild->getInt() : secondChild->getLongInt();
+        if (value >= 0 && value <= 0xFFFF) {
+            generateTrg1Src1ImmInstruction(cg, (isInt ? TR::InstOpCode::cmpli4 : TR::InstOpCode::cmpli8), node, condReg, aReg, value);
+            useImmediate = true;
+        }
+    }
+    if (!useImmediate) {
+        TR::Register *bReg = cg->evaluate(secondChild);
         generateTrg1Src2Instruction(cg, (isInt ? TR::InstOpCode::cmpl4 : TR::InstOpCode::cmpl8), node, condReg, aReg, bReg);
+    }
+    if (isAtLeastP9) {
         generateTrg1Src1Instruction(cg, TR::InstOpCode::setb, node, resultReg, condReg);
     }
     else {
-        if (secondChildConstant) {
-            int64_t value = isInt ? secondChild->getInt() : secondChild->getLongInt(); //check this
-            if (value >= 0 && value <= 0xFFFF) {
-                generateTrg1Src1ImmInstruction(cg, (isInt ? TR::InstOpCode::cmpli4 : TR::InstOpCode::cmpli8), node, condReg, aReg, value);
-            } else {
-                bReg = cg->evaluate(secondChild);
-                generateTrg1Src2Instruction(cg, (isInt ? TR::InstOpCode::cmpl4 : TR::InstOpCode::cmpl8), node, condReg, aReg, bReg);
-            }
-        }
-        else {
-            bReg = cg->evaluate(secondChild);
-            generateTrg1Src2Instruction(cg, (isInt ? TR::InstOpCode::cmpl4 : TR::InstOpCode::cmpl8), node, condReg, aReg, bReg);
-        }
         generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, const1Reg, 1);
         generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, constNeg1Reg, -1);
         generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, const0Reg, 0);
