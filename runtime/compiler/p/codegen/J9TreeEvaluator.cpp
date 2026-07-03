@@ -14802,12 +14802,14 @@ bool J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&r
 
             case TR::java_lang_Integer_compareUnsigned:
                 if (cg->getSupportsInlineIntegerCompareUnsigned()) {
-                    return inlineIntegerLongCompareUnsigned(node, true, cg);
+                    resultReg = inlineIntegerLongCompareUnsigned(node, true, cg);
+                    return true;
                 }
                 break;
             case TR::java_lang_Long_compareUnsigned:
                 if (cg->getSupportsInlineLongCompareUnsigned()) {
-                    return inlineIntegerLongCompareUnsigned(node, false, cg);
+                    resultReg = inlineIntegerLongCompareUnsigned(node, false, cg);
+                    return true;
                 }
                 break;
 
