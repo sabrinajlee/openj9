@@ -14315,6 +14315,7 @@ static TR::Register *inlineIntegerLongCompareUnsigned(TR::Node *node, bool isInt
         generateTrg1Src3Instruction(cg, TR::InstOpCode::iseleq, node, resultReg, const0Reg, resultReg, condReg);
     }
 
+    if (const0Reg) cg->stopUsingRegister(const1Reg);
     if (const1Reg) cg->stopUsingRegister(const1Reg);
     if (constNeg1Reg) cg->stopUsingRegister(constNeg1Reg);
 
