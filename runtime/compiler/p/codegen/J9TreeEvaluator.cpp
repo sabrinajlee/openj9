@@ -14808,7 +14808,7 @@ bool J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&r
                 break;
             case TR::java_lang_Long_compareUnsigned:
                 if (cg->getSupportsInlineLongCompareUnsigned()) {
-                    resultReg = inlineIntegerLongCompareUnsigned(node, true, cg);
+                    resultReg = inlineIntegerLongCompareUnsigned(node, false, cg);
                     return true;
                 }
                 break;
