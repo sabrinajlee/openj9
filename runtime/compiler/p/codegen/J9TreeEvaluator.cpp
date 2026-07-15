@@ -14296,7 +14296,7 @@ static TR::Register *inlineIntegerLongCompareUnsigned(TR::Node *node, bool isInt
     TR::Register *resultReg = cg->allocateRegister();
     TR::Register *aReg = cg->evaluate(node->getChild(0));
 
-    TR::Register *const1Reg = !isAtLeastP9 ? cg->allocateRegister() : nullptr;
+    TR::Register *workReg = !isAtLeastP9 ? cg->allocateRegister() : nullptr;
     TR::Register *constNeg1Reg = !isAtLeastP9 ? cg->allocateRegister() : nullptr;
     //TR::Register *const0Reg = !isAtLeastP9 ? cg->allocateRegister() : nullptr;
 
@@ -14316,14 +14316,17 @@ static TR::Register *inlineIntegerLongCompareUnsigned(TR::Node *node, bool isInt
         generateTrg1Src1Instruction(cg, TR::InstOpCode::setb, node, resultReg, condReg);
     }
     else {
-        generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, const1Reg, 1);
+        generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, workReg, 1);
         generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, constNeg1Reg, -1);
-        //generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, const0Reg, 0);
-        generateTrg1Src3Instruction(cg, TR::InstOpCode::isellt, node, resultReg, constNeg1Reg, const1Reg, condReg);
-        generateTrg1Src3Instruction(cg, TR::InstOpCode::iseleq, node, resultReg, null, resultReg, condReg);
+
+        generateTrg1Src3Instruction(cg, TR::InstOpCode::isellt, node, resultReg, constNeg1Reg, workReg, condReg);
+
+        generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, workReg, 0);
+
+        generateTrg1Src3Instruction(cg, TR::InstOpCode::iseleq, node, resultReg, workReg, resultReg, condReg);
     }
 
-    if (const1Reg) cg->stopUsingRegister(const1Reg);
+    if (workReg) cg->stopUsingRegister(workReg);
     if (constNeg1Reg) cg->stopUsingRegister(constNeg1Reg);
     //if (const0Reg) cg->stopUsingRegister(const0Reg);
 
