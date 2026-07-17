@@ -7721,18 +7721,6 @@ bool J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&r
                     }
                 }
                 break;
-            case TR::java_lang_Integer_compareUnsigned:
-                if (cg->getSupportsInlineIntegerCompareUnsigned()) {
-                    resultReg = inlineIntegerLongCompareUnsigned(node, true /* isInt */, cg);
-                    return true;
-                }
-                break;
-            case TR::java_lang_Long_compareUnsigned:
-                if (cg->getSupportsInlineLongCompareUnsigned()) {
-                    resultReg = inlineIntegerLongCompareUnsigned(node, false /* isInt */, cg);
-                    return true;
-                }
-                break;
             }
 
             case TR::java_lang_Integer_compareUnsigned:
