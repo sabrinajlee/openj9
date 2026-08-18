@@ -581,6 +581,7 @@ public:
     static TR::Register *inlineIntegerStringSize(TR::Node *node, TR::CodeGenerator *cg);
     static TR::Register *inlineIntegerToCharsForLatin1Strings(TR::Node *node, TR::CodeGenerator *cg);
     static TR::Register *inlineIntegerToCharsForUTF16Strings(TR::Node *node, TR::CodeGenerator *cg);
+    static TR::Register *inlineIntegerLongCompareUnsigned(TR::Node *node, bool isInt, TR::CodeGenerator *cg);
     static TR::Register *bstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
     static TR::Register *sstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
     static TR::Register *istoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);

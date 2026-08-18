@@ -270,6 +270,14 @@ void J9::Z::CodeGenerator::initialize()
     }
 
     cg->setIgnoreDecimalOverflowException(false);
+
+    static const bool disableCompareUnsignedInlining = feGetEnv("TR_DisableCompareUnsignedInlining") != NULL;
+    if (!disableCompareUnsignedInlining) {
+        cg->setSupportsInlineIntegerCompareUnsigned();
+        if (comp->target().is64Bit()) {
+            cg->setSupportsInlineLongCompareUnsigned();
+        }
+    }
 }
 
 bool J9::Z::CodeGenerator::callUsesHelperImplementation(TR::Symbol *sym)
@@ -3868,6 +3876,18 @@ bool J9::Z::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&resul
         case TR::java_lang_Long_getChars_charBuffer:
             if (cg->getSupportsIntegerToChars()) {
                 resultReg = TR::TreeEvaluator::inlineIntegerToCharsForUTF16Strings(node, cg);
+                return resultReg != NULL;
+            }
+            break;
+        case TR::java_lang_Integer_compareUnsigned:
+            if (cg->getSupportsInlineIntegerCompareUnsigned()) {
+                resultReg = TR::TreeEvaluator::inlineIntegerLongCompareUnsigned(node, true /* isInt */, cg);
+                return resultReg != NULL;
+            }
+            break;
+        case TR::java_lang_Long_compareUnsigned:
+            if (cg->getSupportsInlineLongCompareUnsigned()) {
+                resultReg = TR::TreeEvaluator::inlineIntegerLongCompareUnsigned(node, false /* isInt */, cg);
                 return resultReg != NULL;
             }
             break;

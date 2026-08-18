@@ -14673,6 +14673,11 @@ TR::Register *J9::Z::TreeEvaluator::inlineIntegerStringSize(TR::Node *node, TR::
     return node->setRegister(lengthReg);
 }
 
+TR::Register *J9::Z::TreeEvaluator::inlineIntegerLongCompareUnsigned(TR::Node *node, bool isInt, TR::CodeGenerator *cg)
+{
+    
+}
+
 TR::Register *J9::Z::TreeEvaluator::inlineOnSpinWait(TR::Node *node, TR::CodeGenerator *cg)
 {
     TR::Compilation *comp = cg->comp();
